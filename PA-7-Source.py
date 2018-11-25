@@ -1,3 +1,4 @@
+import random
 import tkinter.ttk
 from tkinter import *
 from functools import partial
@@ -24,39 +25,110 @@ def main():
     selectArrayBtn.config(command=partial(onSelectArrayClick, window))
     selectArrayBtn.grid(row=0, column=1, padx=(20,100))
 
+    ##  Display the array creation tab by default
+    onCreateArrayClick(window)
+
     window.mainloop()
 
 ##  Populate the screen with entry fields needed for user array creation
 def onCreateArrayClick(window):
     removeVisibleWidgets()
-    
+
+    ##  Underline selected tab
     sep = ttk.Separator(window, orient=HORIZONTAL)
     sep.grid(row=1, column=0, padx=(100,20), sticky=EW)
 
+    ##  User array entry field
     entry = Entry(window, fg='light grey', relief=FLAT, width=50)
     entry.grid(row=2, column=0, columnspan=2, pady=(10,0))
     entry.insert(0, entryText)
     entry.bind('<FocusIn>', partial(onFocusIn, entry))
     entry.bind('<FocusOut>', partial(onFocusOut, entry))
 
+    ##  Clear the entry field
     clearBtn = Button(window, text='Clear', width=8)
     clearBtn.config(command=partial(onClear, entry))
     clearBtn.grid(row=3, column=0, padx=(0,2), pady=(4,0), sticky=E)
 
+    ##  Submit user input
     submitBtn = Button(window, text='Submit', width=8)
-    submitBtn.config(command=partial(onSubmit, window, entry))
+    submitBtn.config(command=partial(onSubmitCreate, window, entry))
     submitBtn.grid(row=3, column=1, padx=(2,0), pady=(4,0), sticky=W)
 
-    addVisibleWidgets([sep, entry, clearBtn, submitBtn])
+    ##  Label the list boxes
+    lbl1 = Label(window, text='Before Sorting:', fg='grey50')
+    lbl1.grid(row=4, column=0, pady=(70,0))
+    lbl2 = Label(window, text='After Sorting:', fg='grey50')
+    lbl2.grid(row=4, column=1, pady=(70,0))
+
+    ##  Display the array before sorting
+    listboxBefore = Listbox(window)
+    scrollbarBefore = Scrollbar(window, orient=VERTICAL)
+    listboxBefore.config(yscrollcommand=scrollbarBefore.set)
+    scrollbarBefore.config(command=listboxBefore.yview)
+    listboxBefore.grid(row=5, column=0, pady=(0,10))
+    scrollbarBefore.grid(row=5, column=0, padx=(0,26), pady=(0,10), sticky=E+NS)
+
+    ##  Display the array after sorting
+    listboxAfter = Listbox(window)
+    scrollbarAfter = Scrollbar(window, orient=VERTICAL)
+    listboxAfter.config(yscrollcommand=scrollbarAfter.set)
+    scrollbarAfter.config(command=listboxAfter.yview)
+    listboxAfter.grid(row=5, column=1, padx=(0,10), pady=(0,10))
+    scrollbarAfter.grid(row=5, column=1, padx=(0,36), pady=(0,10), sticky=E+NS)
+
+    ##  Track the currently visible widgets
+    addVisibleWidgets([sep, entry, clearBtn, submitBtn, lbl1, lbl2, listboxBefore, scrollbarBefore, listboxAfter, scrollbarAfter])
 
 ##  Populate the screen with entry fields needed for pre-defined array selection
 def onSelectArrayClick(window):
     removeVisibleWidgets()
 
+    ##  Underline selected tab
     sep = ttk.Separator(window, orient=HORIZONTAL)
     sep.grid(row=1, column=1, padx=(20,100), sticky=EW)
 
-    addVisibleWidgets([sep])
+    ##  Generate random arrays
+    l1, l2, l3 = generateArrays(-10000, 10000, 10)
+
+    ##  Allow user to select one of the three arrays
+    v = IntVar()
+    radioBtn1 = Radiobutton(window, text=l1, variable=v, value=0)
+    radioBtn1.grid(row=2, column=0, columnspan=2, padx=(40,0), pady=(10,0), sticky=W)
+    radioBtn2 = Radiobutton(window, text=l2, variable=v, value=1)
+    radioBtn2.grid(row=3, column=0, columnspan=2, padx=(40,0), sticky=W)
+    radioBtn3 = Radiobutton(window, text=l3, variable=v, value=2)
+    radioBtn3.grid(row=4, column=0, columnspan=2, padx=(40,0), sticky=W)
+
+    ##  Submit the user's choice
+    submitBtn = Button(window, text='Submit', width=8)
+    submitBtn.config(command=partial(onSubmitSelect, window, v, l1, l2, l3))
+    submitBtn.grid(row=5, column=0, columnspan=2)
+
+    ##  Label the list boxes
+    lbl1 = Label(window, text='Before Sorting:', fg='grey50')
+    lbl1.grid(row=6, column=0, pady=(18,0))
+    lbl2 = Label(window, text='After Sorting:', fg='grey50')
+    lbl2.grid(row=6, column=1, pady=(18,0))
+
+    ##  Display the array before sorting
+    listboxBefore = Listbox(window)
+    scrollbarBefore = Scrollbar(window, orient=VERTICAL)
+    listboxBefore.config(yscrollcommand=scrollbarBefore.set)
+    scrollbarBefore.config(command=listboxBefore.yview)
+    listboxBefore.grid(row=7, column=0, pady=(0,10))
+    scrollbarBefore.grid(row=7, column=0, padx=(0,26), pady=(0,10), sticky=E+NS)
+
+    ##  Display the array after sorting
+    listboxAfter = Listbox(window)
+    scrollbarAfter = Scrollbar(window, orient=VERTICAL)
+    listboxAfter.config(yscrollcommand=scrollbarAfter.set)
+    scrollbarAfter.config(command=listboxAfter.yview)
+    listboxAfter.grid(row=7, column=1, padx=(0,10), pady=(0,10))
+    scrollbarAfter.grid(row=7, column=1, padx=(0,36), pady=(0,10), sticky=E+NS)
+
+    ##  Track the currently visisble widgets
+    addVisibleWidgets([sep, radioBtn1, radioBtn2, radioBtn3, submitBtn, lbl1, lbl2, listboxBefore, scrollbarBefore, listboxAfter, scrollbarAfter])
 
 ##  Add widgets to global visibleWidgets array
 def addVisibleWidgets(widgets):
@@ -118,8 +190,20 @@ def displayError(window, valid, err):
         errorLbl = Label(window, textvariable=errVar, fg='red')
         errorLbl.grid(row=4, column=0, columnspan=2)
 
+##  Create arrays of random numbers
+def generateArrays(rangeMin, rangeMax, size):
+    l1 = random.sample(range(rangeMin, rangeMax), size)
+    l2 = random.sample(range(rangeMin, rangeMax), size)
+    l3 = random.sample(range(rangeMin, rangeMax), size)
+
+    return l1, l2, l3
+
+##  Sort the array
+def heapSort(array):
+    print(array)
+
 ##  Submit user input
-def onSubmit(window, entry):
+def onSubmitCreate(window, entry):
     entry = entry.get().split(',')
     valid, err = checkEntry(entry)
     displayError(window, valid, err)
@@ -128,6 +212,20 @@ def onSubmit(window, entry):
         ##  Convert entry elements to integers
         for i in range(0, len(entry)):
             entry[i] = int(entry[i])
+
+        ##  Run the algorithm
+        heapSort(entry)
+
+##  Submit user selection
+def onSubmitSelect(window, v, l1, l2, l3):
+    ##  Run the algorithm
+    v = v.get()
+    if v == 0:
+        heapSort(l1)
+    elif v == 1:
+        heapSort(l2)
+    else:
+        heapSort(l3)
 
 if __name__ == '__main__':
     main()
