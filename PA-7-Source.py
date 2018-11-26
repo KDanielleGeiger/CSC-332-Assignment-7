@@ -50,11 +50,6 @@ def onCreateArrayClick(window):
     clearBtn.config(command=partial(onClear, entry))
     clearBtn.grid(row=3, column=0, padx=(0,2), pady=(4,0), sticky=E)
 
-    ##  Submit user input
-    submitBtn = Button(window, text='Submit', width=8)
-    submitBtn.config(command=partial(onSubmitCreate, window, entry))
-    submitBtn.grid(row=3, column=1, padx=(2,0), pady=(4,0), sticky=W)
-
     ##  Label the list boxes
     lbl1 = Label(window, text='Before Sorting:', fg='grey50')
     lbl1.grid(row=4, column=0, pady=(70,0))
@@ -76,6 +71,11 @@ def onCreateArrayClick(window):
     scrollbarAfter.config(command=listboxAfter.yview)
     listboxAfter.grid(row=5, column=1, padx=(0,10), pady=(0,10))
     scrollbarAfter.grid(row=5, column=1, padx=(0,36), pady=(0,10), sticky=E+NS)
+
+    ##  Submit user input
+    submitBtn = Button(window, text='Submit', width=8)
+    submitBtn.config(command=partial(onSubmitCreate, window, entry, listboxBefore, listboxAfter))
+    submitBtn.grid(row=3, column=1, padx=(2,0), pady=(4,0), sticky=W)
 
     ##  Track the currently visible widgets
     addVisibleWidgets([sep, entry, clearBtn, submitBtn, lbl1, lbl2, listboxBefore, scrollbarBefore, listboxAfter, scrollbarAfter])
@@ -100,11 +100,6 @@ def onSelectArrayClick(window):
     radioBtn3 = Radiobutton(window, text=l3, variable=v, value=2)
     radioBtn3.grid(row=4, column=0, columnspan=2, padx=(40,0), sticky=W)
 
-    ##  Submit the user's choice
-    submitBtn = Button(window, text='Submit', width=8)
-    submitBtn.config(command=partial(onSubmitSelect, window, v, l1, l2, l3))
-    submitBtn.grid(row=5, column=0, columnspan=2)
-
     ##  Label the list boxes
     lbl1 = Label(window, text='Before Sorting:', fg='grey50')
     lbl1.grid(row=6, column=0, pady=(18,0))
@@ -126,6 +121,11 @@ def onSelectArrayClick(window):
     scrollbarAfter.config(command=listboxAfter.yview)
     listboxAfter.grid(row=7, column=1, padx=(0,10), pady=(0,10))
     scrollbarAfter.grid(row=7, column=1, padx=(0,36), pady=(0,10), sticky=E+NS)
+
+    ##  Submit the user's choice
+    submitBtn = Button(window, text='Submit', width=8)
+    submitBtn.config(command=partial(onSubmitSelect, window, v, l1, l2, l3, listboxBefore, listboxAfter))
+    submitBtn.grid(row=5, column=0, columnspan=2)
 
     ##  Track the currently visisble widgets
     addVisibleWidgets([sep, radioBtn1, radioBtn2, radioBtn3, submitBtn, lbl1, lbl2, listboxBefore, scrollbarBefore, listboxAfter, scrollbarAfter])
@@ -200,10 +200,45 @@ def generateArrays(rangeMin, rangeMax, size):
 
 ##  Sort the array
 def heapSort(array):
-    print(array)
+    ## Convert array to heap
+    length = len(array) - 1
+    leastParent = int(length / 2)
+    for i in range(leastParent, -1, -1):
+        moveDown(array, i, length)
+
+    ## Flatten heap into sorted array
+    for i in range(length, 0, -1):
+        if array[0] > array[i]:
+            swap(array, 0, i)
+            moveDown(array, 0, i - 1)
+
+    return array
+
+##  Move an element down
+def moveDown(array, first, last):
+    largest = 2 * first + 1
+    while largest <= last:
+        ## Right child exists and is larger than left child
+        if (largest < last) and (array[largest] < array[largest + 1]):
+            largest += 1
+
+        ##  Right child is larger than parent
+        if array[largest] > array[first]:
+            swap(array, largest, first)
+            ##  Move down to largest child
+            first = largest;
+            largest = 2 * first + 1
+        else:
+            return
+
+##  Swap two elements
+def swap(array, i, j):
+    temp = array[i]
+    array[i] = array[j]
+    array[j] = temp
 
 ##  Submit user input
-def onSubmitCreate(window, entry):
+def onSubmitCreate(window, entry, listboxBefore, listboxAfter):
     entry = entry.get().split(',')
     valid, err = checkEntry(entry)
     displayError(window, valid, err)
@@ -213,19 +248,42 @@ def onSubmitCreate(window, entry):
         for i in range(0, len(entry)):
             entry[i] = int(entry[i])
 
+        ##  Display original array
+        listboxBefore.delete(0, END)
+        for i in entry:
+            listboxBefore.insert(END, i)
+
         ##  Run the algorithm
-        heapSort(entry)
+        array = heapSort(entry)
+
+        ##  Display the results
+        listboxAfter.delete(0, END)
+        for i in array:
+            listboxAfter.insert(END, i)
 
 ##  Submit user selection
-def onSubmitSelect(window, v, l1, l2, l3):
-    ##  Run the algorithm
+def onSubmitSelect(window, v, l1, l2, l3, listboxBefore, listboxAfter):
+    ##  Determine which array the user selected
     v = v.get()
     if v == 0:
-        heapSort(l1)
+        entry = l1
     elif v == 1:
-        heapSort(l2)
+        entry = l2
     else:
-        heapSort(l3)
+        entry = l3
+
+    ##  Display the original array
+    listboxBefore.delete(0, END)
+    for i in entry:
+        listboxBefore.insert(END, i)
+
+    ##  Run the algorithm
+    array = heapSort(entry)
+
+    ##  Display the results
+    listboxAfter.delete(0, END)
+    for i in array:
+        listboxAfter.insert(END, i)
 
 if __name__ == '__main__':
     main()
